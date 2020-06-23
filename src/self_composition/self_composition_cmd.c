@@ -14,6 +14,17 @@ void self_compose_Init(Abc_Frame_t *pAbc)
 
 int self_compose_cmd(Abc_Frame_t *pAbc, int argc, char **argv)
 {
+    Extra_UtilGetoptReset();
+    
+    if((Extra_UtilGetopt(argc, argv, "h"))!=EOF)
+       goto usage;
+    
+    if(argc!=(globalUtilOptind+1))
+    {
+       printf("self_compose: Input file name should be given on the command line.\n");
+       return 0;
+    } 
+
     Abc_Ntk_t * pNtk;
     pNtk = self_composeAbc(pAbc, argc, argv);
     
@@ -23,6 +34,12 @@ int self_compose_cmd(Abc_Frame_t *pAbc, int argc, char **argv)
     Abc_FrameReplaceCurrentNetwork(pAbc, pNtk);
     Abc_FrameClearVerifStatus(pAbc);
     return 0;
+    
+    usage:
+    Abc_Print(-2, "usage: self_compose [-h] <verilog_file_name>\n");
+    Abc_Print(-2, "\t         builds a self-composed AIG from the verilog file\n");
+    Abc_Print(-2, "\t-h     : print the command usage\n");
+    return 1;
 }
 
 ABC_NAMESPACE_IMPL_END
