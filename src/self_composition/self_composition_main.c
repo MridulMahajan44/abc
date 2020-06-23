@@ -84,7 +84,7 @@ Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2)
      Abc_NtkForEachLatch(pNtk2, pNode, i )
      Abc_ObjAddFanin(Abc_ObjFanin0(pNode)->pCopy, Abc_ObjChild0Copy(Abc_ObjFanin0(pNode)));
         
-     Abc_NtkForEachCo(pNtk1, pObj, i)
+     Abc_NtkForEachPo(pNtk1, pObj, i)
      {
         pObjNew = Abc_NtkCreatePo(pNtkSelfComp);
         Abc_ObjAddFanin(pObjNew, Abc_ObjChild0Copy(pObj));
