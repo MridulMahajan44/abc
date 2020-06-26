@@ -80,7 +80,6 @@ Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2, char *var_list)
     pNtkSelfComp->pName = Extra_UtilStrsav(Buffer);
 
     Abc_Obj_t *pObj, *pObjNew;
-    int i;
 
     Abc_AigConst1(pNtk1)->pCopy = Abc_AigConst1(pNtkSelfComp);
     Abc_AigConst1(pNtk2)->pCopy = Abc_AigConst1(pNtkSelfComp);
