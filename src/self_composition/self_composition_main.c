@@ -9,7 +9,7 @@ Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2, char *var_list);
 
 Abc_Ntk_t *self_composeAbc(Abc_Frame_t *pAbc, int argc, char **argv)
 {
-    char * pFileName;
+    char *pFileName1, *pFileName2;
     Abc_Ntk_t *pNtk1, *pNtk2, *result;
     Extra_UtilGetoptReset();
     pFileName1 = argv[globalUtilOptind+1];
