@@ -19,9 +19,9 @@ int self_compose_cmd(Abc_Frame_t *pAbc, int argc, char **argv)
     if((Extra_UtilGetopt(argc, argv, "h"))!=EOF)
        goto usage;
     
-    if(argc!=(globalUtilOptind+1))
+    if(argc!=(globalUtilOptind+2))
     {
-       printf("self_compose: Input file name should be given on the command line.\n");
+       printf("self_compose: Input and variable list file names should be given on the command line.\n");
        return 0;
     } 
 
@@ -36,7 +36,7 @@ int self_compose_cmd(Abc_Frame_t *pAbc, int argc, char **argv)
     return 0;
     
     usage:
-    Abc_Print(-2, "usage: self_compose [-h] <verilog_file_name>\n");
+    Abc_Print(-2, "usage: self_compose [-h] <verilog_file_name> <variable_list_file_name>\n");
     Abc_Print(-2, "\t         builds a self-composed AIG from the verilog file\n");
     Abc_Print(-2, "\t-h     : print the command usage\n");
     return 1;
