@@ -15,7 +15,7 @@ Abc_Ntk_t *self_composeAbc(Abc_Frame_t *pAbc, int argc, char **argv)
     pFileName1 = argv[globalUtilOptind+1];
     pFileName2 = argv[globalUtilOptind+2];
     pNtk1 = Io_Read(pFileName1, IO_FILE_VERILOG, 0, 0); 
-    pNtk2 = Io_Read(pFileName2, IO_FILE_VERILOG, 0, 0);  
+    pNtk2 = Io_Read(pFileName1, IO_FILE_VERILOG, 0, 0);  
 
     if(pNtk1 == NULL || pNtk2 == NULL){
         Abc_Print(-1, "self_compose: Getting the target network has failed.\n");
