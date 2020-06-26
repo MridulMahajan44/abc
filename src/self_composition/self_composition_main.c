@@ -1,6 +1,7 @@
 #include "base/main/main.h"
 #include "base/abc/abc.h"
 #include "base/io/ioAbc.h"
+#include <stdio.h>
 
 ABC_NAMESPACE_IMPL_START
 
