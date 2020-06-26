@@ -4,29 +4,70 @@
 
 ABC_NAMESPACE_IMPL_START
 
-Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2);
+Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2, char *var_list);
 
 Abc_Ntk_t *self_composeAbc(Abc_Frame_t *pAbc, int argc, char **argv)
 {
     char * pFileName;
     Abc_Ntk_t *pNtk1, *pNtk2, *result;
     Extra_UtilGetoptReset();
-    pFileName = argv[globalUtilOptind+1];
-    pNtk1 = Io_Read(pFileName, IO_FILE_VERILOG, 0, 0); 
-    pNtk2 = Io_Read(pFileName, IO_FILE_VERILOG, 0, 0);  
+    pFileName1 = argv[globalUtilOptind+1];
+    pFileName2 = argv[globalUtilOptind+2];
+    pNtk1 = Io_Read(pFileName1, IO_FILE_VERILOG, 0, 0); 
+    pNtk2 = Io_Read(pFileName2, IO_FILE_VERILOG, 0, 0);  
 
     if(pNtk1 == NULL || pNtk2 == NULL){
         Abc_Print(-1, "self_compose: Getting the target network has failed.\n");
         return NULL;
     }  
 
-    result = self_compose(pNtk1, pNtk2);
+    result = self_compose(pNtk1, pNtk2, pFileName2);
 
     return result;
 } 
 
-Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2)
+Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2, char *var_list)
 {
+    int fd = dup(fileno(stdin)), n1, n2, i;
+    
+    if(freopen(var_list, "r", stdin)==NULL)
+    {
+      printf("self_composition: Opening the variable list file has failed.\n");
+      dup2(fd, fileno(stdin));
+      close(fd);
+      return NULL;
+    }
+
+    if(scanf("%d %d", &n1, &n2)<2)
+    {
+      printf("self_composition: The variable list is not valid.\n");
+      dup2(fd, fileno(stdin));
+      close(fd);
+      return NULL;
+    }
+
+    int assump_vars[n1], assert_vars[n2];
+
+    for(i=0; i<n1; i++)
+      if(scanf("%d", &assump_vars[i])<1)
+      {
+         printf("self_composition: The variable list isn't valid.\n");
+         dup2(fd, fileno(stdin));
+         close(fd);
+         return NULL;
+       }
+    for(i=0; i<n2; i++)
+       if(scanf("%d", &assert_vars[i])<1)
+       {
+         printf("self_composition: The variable list isn't valid.\n");
+         dup2(fd, fileno(stdin));
+         close(fd);
+         return NULL;
+       }
+
+    dup2(fd, fileno(stdin));
+    close(fd);
+    
     char Buffer[1000];
     Abc_Ntk_t * pNtkSelfComp;
 
@@ -84,15 +125,25 @@ Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2)
      Abc_NtkForEachLatch(pNtk2, pNode, i )
      Abc_ObjAddFanin(Abc_ObjFanin0(pNode)->pCopy, Abc_ObjChild0Copy(Abc_ObjFanin0(pNode)));
         
-     Abc_NtkForEachPo(pNtk1, pObj, i)
+     Abc_Obj_t *o1, *o2, *oA;
+     
+     for(i=0; i<n1; i++)
      {
-        pObjNew = Abc_NtkCreatePo(pNtkSelfComp);
-        Abc_ObjAddFanin(pObjNew, Abc_ObjChild0Copy(pObj));
-        Abc_ObjAssignName(pObjNew, Abc_ObjName(pObj), "_1");
-        pObj = Abc_NtkPo(pNtk2, i); 
-        pObjNew = Abc_NtkCreatePo(pNtkSelfComp);
-        Abc_ObjAddFanin(pObjNew, Abc_ObjChild0Copy(pObj));
-        Abc_ObjAssignName(pObjNew, Abc_ObjName(pObj), "_2");
+       o1 = Abc_NtkPo(pNtk1, assump_vars[i]);
+       o2 = Abc_NtkPo(pNtk2, assump_vars[i]);
+       oA = Abc_ObjNot(Abc_AigXor((Abc_Aig_t *)pNtkSelfComp->pManFunc, Abc_ObjChild0Copy(o1), Abc_ObjChild0Copy(o2)));
+       pObjNew = Abc_NtkCreatePo(pNtkSelfComp);
+       Abc_ObjAddFanin(pObjNew, oA);
+       Abc_ObjAssignName(pObjNew, Abc_ObjName(o1), "_comp");
+     }
+     for (i=0; i<n2; i++)
+     {
+       o1 = Abc_NtkPo(pNtk1, assert_vars[i]);
+       o2 = Abc_NtkPo(pNtk2, assert_vars[i]);
+       oA = Abc_ObjNot(Abc_AigXor((Abc_Aig_t *)pNtkSelfComp->pManFunc, Abc_ObjChild0Copy(o1), Abc_ObjChild0Copy(o2)));
+       pObjNew = Abc_NtkCreatePo(pNtkSelfComp);
+       Abc_ObjAddFanin(pObjNew, oA);
+       Abc_ObjAssignName(pObjNew, Abc_ObjName(o1), "_comp");
       }
 
     Abc_AigCleanup((Abc_Aig_t *)pNtkSelfComp->pManFunc);
