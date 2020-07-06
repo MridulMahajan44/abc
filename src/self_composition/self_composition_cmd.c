@@ -36,8 +36,8 @@ int self_compose_cmd(Abc_Frame_t *pAbc, int argc, char **argv)
     return 0;
     
     usage:
-    Abc_Print(-2, "usage: self_compose [-h] <verilog_file_name> <variable_list_file_name>\n");
-    Abc_Print(-2, "\t         builds a self-composed AIG from the verilog file\n");
+    Abc_Print(-2, "usage: self_compose [-h] <file_name> <variable_list_file_name>\n");
+    Abc_Print(-2, "\t         builds a self-composed AIG from the file\n");
     Abc_Print(-2, "\t-h     : print the command usage\n");
     return 1;
 }
