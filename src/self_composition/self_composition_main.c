@@ -14,8 +14,8 @@ Abc_Ntk_t *self_composeAbc(Abc_Frame_t *pAbc, int argc, char **argv)
     Extra_UtilGetoptReset();
     pFileName1 = argv[globalUtilOptind+1];
     pFileName2 = argv[globalUtilOptind+2];
-    pNtk1 = Io_Read(pFileName1, IO_FILE_VERILOG, 0, 0); 
-    pNtk2 = Io_Read(pFileName1, IO_FILE_VERILOG, 0, 0);  
+    pNtk1 = Io_Read(pFileName1, Io_ReadFileType(pFileName1), 0, 0); 
+    pNtk2 = Io_Read(pFileName1, Io_ReadFileType(pFileName1), 0, 0);  
 
     if(pNtk1 == NULL || pNtk2 == NULL){
         Abc_Print(-1, "self_compose: Getting the target network has failed.\n");
@@ -47,10 +47,10 @@ Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2, char *var_list)
       return NULL;
     }
 
-    int assump_vars[n1], assert_vars[n2];
+    char assump_vars[n1][100], assert_vars[n2][100];
 
     for(i=0; i<n1; i++)
-      if(scanf("%d", &assump_vars[i])<1)
+      if(scanf("%s", assump_vars[i])<1)
       {
          printf("self_composition: The variable list isn't valid.\n");
          dup2(fd, fileno(stdin));
@@ -58,7 +58,7 @@ Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2, char *var_list)
          return NULL;
        }
     for(i=0; i<n2; i++)
-       if(scanf("%d", &assert_vars[i])<1)
+       if(scanf("%s", assert_vars[i])<1)
        {
          printf("self_composition: The variable list isn't valid.\n");
          dup2(fd, fileno(stdin));
@@ -120,31 +120,49 @@ Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2, char *var_list)
      Abc_AigForEachAnd(pNtk2, pNode, i)
      pNode->pCopy = Abc_AigAnd((Abc_Aig_t *)pNtkSelfComp->pManFunc, Abc_ObjChild0Copy(pNode), Abc_ObjChild1Copy(pNode));  
         
-     Abc_NtkForEachLatch(pNtk1, pNode, i )
+     Abc_NtkForEachLatch(pNtk1, pNode, i)
      Abc_ObjAddFanin(Abc_ObjFanin0(pNode)->pCopy, Abc_ObjChild0Copy(Abc_ObjFanin0(pNode)));
-     Abc_NtkForEachLatch(pNtk2, pNode, i )
+     Abc_NtkForEachLatch(pNtk2, pNode, i)
      Abc_ObjAddFanin(Abc_ObjFanin0(pNode)->pCopy, Abc_ObjChild0Copy(Abc_ObjFanin0(pNode)));
         
      Abc_Obj_t *o1, *o2, *oA;
-     
-     for(i=0; i<n1; i++)
-     {
-       o1 = Abc_NtkPo(pNtk1, assump_vars[i]);
-       o2 = Abc_NtkPo(pNtk2, assump_vars[i]);
-       oA = Abc_ObjNot(Abc_AigXor((Abc_Aig_t *)pNtkSelfComp->pManFunc, Abc_ObjChild0Copy(o1), Abc_ObjChild0Copy(o2)));
-       pObjNew = Abc_NtkCreatePo(pNtkSelfComp);
-       Abc_ObjAddFanin(pObjNew, oA);
-       Abc_ObjAssignName(pObjNew, Abc_ObjName(o1), "_comp");
-     }
+
      for (i=0; i<n2; i++)
      {
-       o1 = Abc_NtkPo(pNtk1, assert_vars[i]);
-       o2 = Abc_NtkPo(pNtk2, assert_vars[i]);
-       oA = Abc_ObjNot(Abc_AigXor((Abc_Aig_t *)pNtkSelfComp->pManFunc, Abc_ObjChild0Copy(o1), Abc_ObjChild0Copy(o2)));
+       if(assert_vars[i][0] == 'o')
+       {
+       o1 = Abc_NtkPo(pNtk1, atoi(&assert_vars[i][1]));
+       o2 = Abc_NtkPo(pNtk2, atoi(&assert_vars[i][1]));
+       oA = Abc_AigXor((Abc_Aig_t *)pNtkSelfComp->pManFunc, Abc_ObjChild0Copy(o1), Abc_ObjChild0Copy(o2));
+       }
+       else
+       {
+       o1 = Abc_NtkPi(pNtk1, atoi(&assert_vars[i][1]));
+       o2 = Abc_NtkPi(pNtk2, atoi(&assert_vars[i][1]));
+       oA = Abc_AigXor((Abc_Aig_t *)pNtkSelfComp->pManFunc, o1->pCopy, o2->pCopy);
+       }
        pObjNew = Abc_NtkCreatePo(pNtkSelfComp);
        Abc_ObjAddFanin(pObjNew, oA);
        Abc_ObjAssignName(pObjNew, Abc_ObjName(o1), "_comp");
       }
+     for(i=0; i<n1; i++)
+     {
+       if(assump_vars[i][0] == 'o')
+       {
+       o1 = Abc_NtkPo(pNtk1, atoi(&assump_vars[i][1]));
+       o2 = Abc_NtkPo(pNtk2, atoi(&assump_vars[i][1]));
+       oA = Abc_AigXor((Abc_Aig_t *)pNtkSelfComp->pManFunc, Abc_ObjChild0Copy(o1), Abc_ObjChild0Copy(o2));
+       }
+       else
+       {
+       o1 = Abc_NtkPi(pNtk1, atoi(&assump_vars[i][1]));
+       o2 = Abc_NtkPi(pNtk2, atoi(&assump_vars[i][1]));
+       oA = Abc_AigXor((Abc_Aig_t *)pNtkSelfComp->pManFunc, o1->pCopy, o2->pCopy);
+       }
+       pObjNew = Abc_NtkCreatePo(pNtkSelfComp);
+       Abc_ObjAddFanin(pObjNew, oA);
+       Abc_ObjAssignName(pObjNew, Abc_ObjName(o1), "_comp");
+     }
 
     Abc_AigCleanup((Abc_Aig_t *)pNtkSelfComp->pManFunc);
 
@@ -154,6 +172,7 @@ Abc_Ntk_t *self_compose(Abc_Ntk_t *pNtk1, Abc_Ntk_t *pNtk2, char *var_list)
         Abc_NtkDelete(pNtkSelfComp);
         return NULL;
     }
+
     return pNtkSelfComp;
 }
 
